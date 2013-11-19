@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="2108405979">
+  <component name="DataSourceManagerImpl" format="xml" hash="4253202587">
     <data-source source="LOCAL" name="Derby - embedded" uuid="f91588d2-5fc6-4385-804b-d96b601417cd">
       <driver-ref>derby.embedded</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.apache.derby.jdbc.EmbeddedDriver</jdbc-driver>
       <jdbc-url>jdbc:derby:$PROJECT_DIR$/target/databases/derby</jdbc-url>
       <default-dialect>derby</default-dialect>
+      <libraries />
+    </data-source>
+    <data-source source="LOCAL" name="H2 - test" uuid="4315ae41-6771-493b-933d-25b512d038c4">
+      <driver-ref>h2.embedded</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.h2.Driver</jdbc-driver>
+      <jdbc-url>jdbc:h2:test</jdbc-url>
+      <default-dialect>h2</default-dialect>
       <libraries />
     </data-source>
   </component>

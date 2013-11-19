@@ -5,8 +5,9 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -20,6 +21,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
+import java.io.File;
 import java.util.*;
 
 
@@ -29,17 +31,28 @@ import java.util.*;
 @RunWith(Arquillian.class)
 public class GamePersistenceTest {
     private static final String[] GAME_TITLES = {"Super Mario Brothers", "Mario Kart", "F-Zero"};
-    @PersistenceContext
+    @Inject
     EntityManager em;
     @Inject
     UserTransaction utx;
 
     @Deployment
     public static Archive<?> createDeployment() {
-        return ShrinkWrap.create(JavaArchive.class, "test2.jar")
+        File[] files = Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .importDependencies(ScopeType.COMPILE)
+                .resolve()
+                .withTransitivity()
+                .asFile();
+
+        WebArchive webArchive = ShrinkWrap.create(WebArchive.class, "test2.jar")
+                .addAsLibraries(files)
                 .addPackage(Game.class.getPackage())
-                .addAsResource("glassfish-embedded/test-persistence.xml", "META-INF/persistence.xml")
+                .addAsManifestResource("persistence.xml", "persistence.xml")
                 .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
+
+        System.out.println(webArchive.toString(true));
+        return webArchive;
     }
 
     private static void assertContainsAllGames(Collection<Game> retrievedGames) {
@@ -61,7 +74,7 @@ public class GamePersistenceTest {
 
     @After
     public void commitTransaction() throws Exception {
-        utx.commit();
+        em.getTransaction().commit();
     }
 
     @Test
@@ -101,28 +114,28 @@ public class GamePersistenceTest {
     }
 
     private void clearData() throws Exception {
-        utx.begin();
+        em.getTransaction().begin();
         em.joinTransaction();
         System.out.println("Dumping old records...");
         em.createQuery("delete from Game").executeUpdate();
-        utx.commit();
+        em.getTransaction().commit();
     }
 
     private void insertData() throws Exception {
-        utx.begin();
+        em.getTransaction().begin();
         em.joinTransaction();
         System.out.println("Inserting records...");
         for (String title : GAME_TITLES) {
             Game game = new Game(title);
             em.persist(game);
         }
-        utx.commit();
+        em.getTransaction().commit();
         // clear the persistence context (first-level cache)
         em.clear();
     }
 
     private void startTransaction() throws Exception {
-        utx.begin();
+        em.getTransaction().begin();
         em.joinTransaction();
     }
 }
