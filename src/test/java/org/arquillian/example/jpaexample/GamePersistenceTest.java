@@ -2,6 +2,8 @@ package org.arquillian.example.jpaexample;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.persistence.DataSource;
+import org.jboss.arquillian.persistence.UsingDataSet;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -15,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
+import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -33,8 +36,9 @@ public class GamePersistenceTest {
     private static final String[] GAME_TITLES = {"Super Mario Brothers", "Mario Kart", "F-Zero"};
     @Inject
     EntityManager em;
-    @Inject
-    UserTransaction utx;
+
+    @PersistenceContext
+    EntityManager em1;
 
     @Deployment
     public static Archive<?> createDeployment() {
@@ -45,7 +49,7 @@ public class GamePersistenceTest {
                 .withTransitivity()
                 .asFile();
 
-        WebArchive webArchive = ShrinkWrap.create(WebArchive.class, "test2.jar")
+        WebArchive webArchive = ShrinkWrap.create(WebArchive.class, "test2.war")
                 .addAsLibraries(files)
                 .addPackage(Game.class.getPackage())
                 .addAsManifestResource("persistence.xml", "persistence.xml")
@@ -67,6 +71,8 @@ public class GamePersistenceTest {
 
     @Before
     public void preparePersistenceTest() throws Exception {
+//        LocalContext ctx = LocalContextFactory.createLocalContext();
+//        ctx.addDataSource();
         clearData();
         insertData();
         startTransaction();
@@ -78,6 +84,8 @@ public class GamePersistenceTest {
     }
 
     @Test
+    @UsingDataSet("test.xml")
+//    @DataSource("jdbc/arquillian")
     public void shouldFindAllGamesUsingJpqlQuery() throws Exception {
         // given
         String fetchingAllGamesInJpql = "select g from Game g order by g.id";
@@ -117,7 +125,7 @@ public class GamePersistenceTest {
         em.getTransaction().begin();
         em.joinTransaction();
         System.out.println("Dumping old records...");
-        em.createQuery("delete from Game").executeUpdate();
+        em.createQuery("delete Game g where g.id > 0").executeUpdate();
         em.getTransaction().commit();
     }
 

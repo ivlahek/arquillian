@@ -4,6 +4,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import javax.naming.NamingException;
+import javax.naming.spi.NamingManager;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
@@ -19,7 +21,10 @@ public class EntityManagerProducer {
     private EntityManager entityManager;
 
     @PostConstruct
-    public void initialize() {
+    public void initialize() throws NamingException, ClassNotFoundException {
+        LocalContext ctx = new LocalContext();
+//        Class.forName("com.mysql.jdbc.Driver");
+        NamingManager.setInitialContextFactoryBuilder(ctx);
         entityManagerFactory = Persistence.createEntityManagerFactory("test");
         createEntityManager();
     }
